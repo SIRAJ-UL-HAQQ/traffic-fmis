@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Search — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>🔍 Search Challans & Violations</h2>
+</div>
+
+<!-- Search Form -->
+<div class="card search-card">
+    <form method="POST" action="{{ url_for('search.search') }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="reg_number">Vehicle Registration No.</label>
+                <input type="text" id="reg_number" name="reg_number"
+                       placeholder="e.g. LHR-5577"
+                       value="{{ request.form.get('reg_number', '') }}">
+            </div>
+            <div class="form-group">
+                <label for="owner_cnic">Owner CNIC</label>
+                <input type="text" id="owner_cnic" name="owner_cnic"
+                       placeholder="e.g. 4210112345678"
+                       value="{{ request.form.get('owner_cnic', '') }}">
+            </div>
+            <div class="form-group">
+                <label for="challan_no">Challan Number</label>
+                <input type="text" id="challan_no" name="challan_no"
+                       placeholder="e.g. TRF-2024-000001"
+                       value="{{ request.form.get('challan_no', '') }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="date_from">Date From</label>
+                <input type="date" id="date_from" name="date_from"
+                       value="{{ request.form.get('date_from', '') }}">
+            </div>
+            <div class="form-group">
+                <label for="date_to">Date To</label>
+                <input type="date" id="date_to" name="date_to"
+                       value="{{ request.form.get('date_to', '') }}">
+            </div>
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="pending" {{ 'selected' if request.form.get('status') == 'pending' }}>Pending</option>
+                    <option value="partial" {{ 'selected' if request.form.get('status') == 'partial' }}>Partial</option>
+                    <option value="paid"    {{ 'selected' if request.form.get('status') == 'paid' }}>Paid</option>
+                    <option value="cancelled" {{ 'selected' if request.form.get('status') == 'cancelled' }}>Cancelled</option>
+                </select>
+            </div>
+        </div>
+        {% if session.role == 'admin' %}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="officer_name">Officer Name</label>
+                <input type="text" id="officer_name" name="officer_name"
+                       placeholder="Officer's name"
+                       value="{{ request.form.get('officer_name', '') }}">
+            </div>
+        </div>
+        {% endif %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">🔍 Search</button>
+            <a href="{{ url_for('search.search') }}" class="btn btn-outline">Clear</a>
+        </div>
+    </form>
+</div>
+
+<!-- Results -->
+{% if searched %}
+<div class="card">
+    <h3 class="card-title">
+        Search Results
+        <span class="badge badge-blue">{{ results | length }} record(s)</span>
+    </h3>
+
+    {% if results %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Challan No.</th>
+                    <th>Vehicle</th>
+                    <th>Owner</th>
+                    <th>CNIC</th>
+                    <th>Violation</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Total (PKR)</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td><strong>{{ r.challan_number }}</strong></td>
+                    <td>{{ r.registration_number }}</td>
+                    <td>{{ r.owner_name }}</td>
+                    <td>{{ r.cnic }}</td>
+                    <td>{{ r.type_name }}</td>
+                    <td>{{ r.violation_date | string | truncate(10, True, '') }}</td>
+                    <td>{{ r.location | truncate(30) }}</td>
+                    <td>{{ "{:,.0f}".format(r.total_amount) }}</td>
+                    <td>
+                        <span class="badge
+                            {% if r.status == 'paid' %}badge-green
+                            {% elif r.status == 'partial' %}badge-orange
+                            {% elif r.status == 'cancelled' %}badge-red
+                            {% else %}badge-blue{% endif %}">
+                            {{ r.status | upper }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('officer.view_challan', challan_id=r.challan_id) }}"
+                           class="btn btn-xs btn-outline">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No results found. Try different search criteria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}All Challans — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📄 All Challans</h2>
+</div>
+
+<!-- Filter bar -->
+<div class="card filter-bar">
+    <form method="GET" class="filter-form">
+        <label>Filter by Status:</label>
+        {% for s in ['', 'pending', 'partial', 'paid', 'cancelled'] %}
+        <a href="{{ url_for('admin.all_challans', status=s) }}"
+           class="btn btn-xs {{ 'btn-primary' if status_filter == s else 'btn-outline' }}">
+            {{ s.upper() if s else 'ALL' }}
+        </a>
+        {% endfor %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Challan No.</th>
+                    <th>Vehicle</th>
+                    <th>Owner</th>
+                    <th>Violation</th>
+                    <th>Officer</th>
+                    <th>Total</th>
+                    <th>Paid</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in challans %}
+                <tr>
+                    <td><strong>{{ c.challan_number }}</strong></td>
+                    <td>{{ c.registration_number }}</td>
+                    <td>{{ c.owner_name }}</td>
+                    <td>{{ c.type_name }}</td>
+                    <td>{{ c.officer_name }}</td>
+                    <td>PKR {{ "{:,.0f}".format(c.total_amount) }}</td>
+                    <td>PKR {{ "{:,.0f}".format(c.paid_amount) }}</td>
+                    <td>
+                        <span class="badge
+                            {% if c.status == 'paid' %}badge-green
+                            {% elif c.status == 'partial' %}badge-orange
+                            {% elif c.status == 'cancelled' %}badge-red
+                            {% else %}badge-blue{% endif %}">
+                            {{ c.status | upper }}
+                        </span>
+                    </td>
+                    <td>{{ c.due_date | string | truncate(10, True, '') }}</td>
+                    <td>
+                        <a href="{{ url_for('officer.view_challan', challan_id=c.challan_id) }}"
+                            class="btn btn-xs btn-outline">View</a>
+
+                        {% if c.status != 'cancelled' and c.status != 'paid' %}
+                        <a href="{{ url_for('admin.cancel_challan', challan_id=c.challan_id) }}"
+                            class="btn btn-xs btn-danger"
+                            onclick="return confirm('Cancel this challan?')">Cancel</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="text-center text-muted">No challans found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

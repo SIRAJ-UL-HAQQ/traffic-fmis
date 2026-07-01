@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Officer Dashboard — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>👮 Officer Dashboard</h2>
+    <span class="badge badge-blue">{{ session.officer_name or session.username }}</span>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card border-blue">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-number">{{ total_violations }}</div>
+        <div class="kpi-label">My Violations</div>
+    </div>
+    <div class="kpi-card border-orange">
+        <div class="kpi-icon">🕐</div>
+        <div class="kpi-number">{{ pending_challans }}</div>
+        <div class="kpi-label">Pending Challans</div>
+    </div>
+    <div class="kpi-card border-green">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-number">PKR {{ "{:,.0f}".format(fines_collected) }}</div>
+        <div class="kpi-label">Fines Collected</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <a href="{{ url_for('officer.record_violation') }}" class="action-btn btn-primary">
+        ➕ Record Violation
+    </a>
+    <a href="{{ url_for('officer.register_vehicle') }}" class="action-btn btn-outline">
+        🚗 Register Vehicle
+    </a>
+    <a href="{{ url_for('search.search') }}" class="action-btn btn-outline">
+        🔍 Search Challans
+    </a>
+</div>
+
+<!-- Recent Violations Table -->
+<div class="card">
+    <h3 class="card-title">My Recent Violations</h3>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Vehicle</th>
+                    <th>Owner</th>
+                    <th>Violation</th>
+                    <th>Fine (PKR)</th>
+                    <th>Challan No.</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in recent %}
+                <tr>
+                    <td>{{ v.violation_date | string | truncate(16, True, '') }}</td>
+                    <td><strong>{{ v.registration_number }}</strong></td>
+                    <td>{{ v.owner_name }}</td>
+                    <td>{{ v.type_name }}</td>
+                    <td>{{ "{:,.0f}".format(v.fine_amount) }}</td>
+                    <td>{{ v.challan_number or '—' }}</td>
+                    <td>
+                        {% if v.status %}
+                        <span class="badge
+                            {% if v.status == 'paid' %}badge-green
+                            {% elif v.status == 'partial' %}badge-orange
+                            {% else %}badge-red{% endif %}">
+                            {{ v.status | upper }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if v.challan_id %}
+                        <a href="{{ url_for('officer.view_challan', challan_id=v.challan_id) }}"
+                           class="btn btn-xs btn-outline">View</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted">No violations recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

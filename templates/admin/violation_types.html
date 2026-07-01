@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Violation Types — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📋 Violation Types</h2>
+    <a href="{{ url_for('admin.add_violation_type') }}" class="btn btn-primary">+ Add Type</a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Violation Type</th>
+                    <th>Description</th>
+                    <th>Base Fine (PKR)</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vt in violation_types %}
+                <tr>
+                    <td>{{ vt.type_id }}</td>
+                    <td><strong>{{ vt.type_name }}</strong></td>
+                    <td>{{ vt.description or '—' }}</td>
+                    <td>{{ "{:,.2f}".format(vt.base_fine) }}</td>
+                    <td>
+                        <span class="badge
+                            {% if vt.severity == 'critical' %}badge-red
+                            {% elif vt.severity == 'major' %}badge-orange
+                            {% elif vt.severity == 'moderate' %}badge-blue
+                            {% else %}badge-green{% endif %}">
+                            {{ vt.severity | upper }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {{ 'badge-green' if vt.is_active else 'badge-red' }}">
+                            {{ 'Active' if vt.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

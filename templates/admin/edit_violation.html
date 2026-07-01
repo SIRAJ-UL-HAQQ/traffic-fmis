@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Edit Violation — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>✏️ Edit Violation</h2>
+    <a href="{{ url_for('admin.all_challans') }}" class="btn btn-outline">← Back</a>
+</div>
+
+<div class="form-card">
+    <form method="POST">
+        <div class="form-group">
+            <label for="fine_amount">Fine Amount (PKR) *</label>
+            <input type="number" id="fine_amount" name="fine_amount"
+                   step="0.01" min="1" required
+                   value="{{ violation.fine_amount }}">
+        </div>
+        <div class="form-group">
+            <label for="location">Location *</label>
+            <input type="text" id="location" name="location"
+                   required value="{{ violation.location }}">
+        </div>
+        <div class="form-group">
+            <label for="description">Notes</label>
+            <textarea id="description" name="description"
+                      rows="3">{{ violation.description or '' }}</textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">✅ Save Changes</button>
+            <a href="{{ url_for('admin.all_challans') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

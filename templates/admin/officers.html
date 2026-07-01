@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Officers — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>👮 Officers Management</h2>
+    <a href="{{ url_for('auth.register_officer') }}" class="btn btn-primary">+ Add Officer</a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Badge No.</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Precinct</th>
+                    <th>Username</th>
+                    <th>Violations</th>
+                    <th>Last Login</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in officers %}
+                <tr>
+                    <td><strong>{{ o.badge_number }}</strong></td>
+                    <td>{{ o.full_name }}</td>
+                    <td>{{ o.department or '—' }}</td>
+                    <td>{{ o.precinct or '—' }}</td>
+                    <td>{{ o.username }}</td>
+                    <td><span class="badge badge-blue">{{ o.violation_count }}</span></td>
+                    <td>{{ o.last_login | string | truncate(16, True, '') if o.last_login else 'Never' }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-green' if o.is_active else 'badge-red' }}">
+                            {{ 'Active' if o.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td style="display:flex; gap:4px; flex-wrap:wrap;">
+                            <a href="{{ url_for('admin.edit_officer', officer_id=o.officer_id) }}"
+                               class="btn btn-xs btn-outline">Edit</a>
+                        <a href="{{ url_for('admin.toggle_officer', officer_id=o.officer_id) }}"
+                            class="btn btn-xs {{ 'btn-danger' if o.is_active else 'btn-success' }}"
+                            onclick="return confirm('{{ 'Deactivate' if o.is_active else 'Activate' }} this officer?')">
+                             {{ 'Deactivate' if o.is_active else 'Activate' }}
+                        </a>
+
+                        <a href="{{ url_for('admin.delete_officer', officer_id=o.officer_id) }}"
+                            class="btn btn-xs btn-danger"
+                            onclick="return confirm('Permanently delete this officer? This cannot be undone.')">
+                             Delete
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted">No officers found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

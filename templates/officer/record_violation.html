@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Record Violation — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>⚠️ Record New Violation</h2>
+    <a href="{{ url_for('officer.dashboard') }}" class="btn btn-outline">← Back</a>
+</div>
+
+<div class="form-card">
+    <form method="POST" action="{{ url_for('officer.record_violation') }}">
+
+        <h3 class="section-heading">Vehicle Information</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="vehicle_id">Select Vehicle *</label>
+                <select id="vehicle_id" name="vehicle_id" required>
+                    <option value="">— Select registered vehicle —</option>
+                    {% for v in vehicles %}
+                    <option value="{{ v.vehicle_id }}">
+                        {{ v.registration_number }} — {{ v.make }} {{ v.model }} ({{ v.owner_name }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <small>
+                    Vehicle not listed?
+                    <a href="{{ url_for('officer.register_vehicle') }}">Register it first →</a>
+                </small>
+            </div>
+        </div>
+
+        <h3 class="section-heading">Violation Details</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="type_id">Violation Type *</label>
+                <select id="type_id" name="type_id" required>
+                    <option value="">— Select violation type —</option>
+                    {% for vt in violation_types %}
+                    <option value="{{ vt.type_id }}"
+                            data-fine="{{ vt.base_fine }}"
+                            data-severity="{{ vt.severity }}">
+                        {{ vt.type_name }} — PKR {{ "{:,.0f}".format(vt.base_fine) }}
+                        ({{ vt.severity | upper }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Estimated Fine</label>
+                <div class="fine-display" id="fineDisplay">
+                    Select a violation type to see fine
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="violation_date">Date & Time of Violation *</label>
+                <input type="datetime-local" id="violation_date" name="violation_date"
+                       value="{{ today }}" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location *</label>
+                <input type="text" id="location" name="location" required
+                       placeholder="e.g. Main Boulevard near Signal 5">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Additional Notes</label>
+            <textarea id="description" name="description" rows="3"
+                      placeholder="Any additional details about the violation..."></textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">✅ Record Violation & Generate Challan</button>
+            <a href="{{ url_for('officer.dashboard') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Live fine preview when violation type changes
+document.getElementById('type_id').addEventListener('change', function() {
+    const selected = this.options[this.selectedIndex];
+    const fine = selected.getAttribute('data-fine');
+    const severity = selected.getAttribute('data-severity');
+    const display = document.getElementById('fineDisplay');
+
+    if (fine) {
+        const formattedFine = parseFloat(fine).toLocaleString('en-PK', {
+            style: 'currency', currency: 'PKR', minimumFractionDigits: 0
+        });
+        const colors = {
+            minor: '#27AE60', moderate: '#E67E22', major: '#E67E22', critical: '#C0392B'
+        };
+        display.innerHTML = `<strong style="color:${colors[severity] || '#333'}; font-size:1.1rem;">
+            Base Fine: ${formattedFine}</strong><br>
+            <small style="color:#666;">* Final fine may be higher for repeat offenders</small>`;
+    } else {
+        display.innerHTML = 'Select a violation type to see fine';
+    }
+});
+</script>
+{% endblock %}

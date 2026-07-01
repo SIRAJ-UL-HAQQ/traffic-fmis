@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Register Vehicle — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>🚗 Register New Vehicle</h2>
+    <a href="{{ url_for('officer.dashboard') }}" class="btn btn-outline">← Back</a>
+</div>
+
+<div class="form-card">
+    <form method="POST" action="{{ url_for('officer.register_vehicle') }}">
+
+        <h3 class="section-heading">Owner Information</h3>
+        <p class="section-note">If the CNIC already exists, owner record will be reused.</p>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cnic">Owner CNIC * (13-15 digits)</label>
+                <input type="text" id="cnic" name="cnic" required
+                       placeholder="e.g. 4210112345678" maxlength="15">
+            </div>
+            <div class="form-group">
+                <label for="owner_name">Owner Full Name *</label>
+                <input type="text" id="owner_name" name="owner_name" required
+                       placeholder="Full legal name">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" name="phone" placeholder="0300-1234567">
+            </div>
+            <div class="form-group">
+                <label for="owner_email">Email</label>
+                <input type="email" id="owner_email" name="owner_email"
+                       placeholder="owner@email.com">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="address">Address</label>
+            <input type="text" id="address" name="address"
+                   placeholder="Full residential address">
+        </div>
+
+        <h3 class="section-heading">Vehicle Information</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="reg_number">Registration Number * (e.g. ABC-123)</label>
+                <input type="text" id="reg_number" name="reg_number" required
+                       placeholder="e.g. LHR-5577" maxlength="20"
+                       style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+                <label for="vehicle_type">Vehicle Type *</label>
+                <select id="vehicle_type" name="vehicle_type" required>
+                    <option value="car">Car</option>
+                    <option value="motorcycle">Motorcycle</option>
+                    <option value="truck">Truck</option>
+                    <option value="bus">Bus</option>
+                    <option value="van">Van</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="make">Make (Brand)</label>
+                <input type="text" id="make" name="make" placeholder="e.g. Toyota">
+            </div>
+            <div class="form-group">
+                <label for="model">Model</label>
+                <input type="text" id="model" name="model" placeholder="e.g. Corolla">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="year">Year</label>
+                <input type="number" id="year" name="year"
+                       min="1980" max="2025" placeholder="e.g. 2020">
+            </div>
+            <div class="form-group">
+                <label for="color">Color</label>
+                <input type="text" id="color" name="color" placeholder="e.g. White">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">✅ Register Vehicle</button>
+            <a href="{{ url_for('officer.record_violation') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

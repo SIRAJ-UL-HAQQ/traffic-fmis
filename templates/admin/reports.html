@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Reports — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📊 Reports & Analytics</h2>
+    <span class="badge badge-blue">SQL Views Data</span>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card border-blue">
+        <div class="kpi-icon">📄</div>
+        <div class="kpi-number">{{ total_challans }}</div>
+        <div class="kpi-label">Total Challans</div>
+    </div>
+    <div class="kpi-card border-green">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-number">PKR {{ "{:,.0f}".format(total_revenue) }}</div>
+        <div class="kpi-label">Total Revenue Collected</div>
+    </div>
+    <div class="kpi-card border-red">
+        <div class="kpi-icon">🔴</div>
+        <div class="kpi-number">{{ total_repeat }}</div>
+        <div class="kpi-label">Repeat Offenders</div>
+    </div>
+    <div class="kpi-card border-orange">
+        <div class="kpi-icon">🕐</div>
+        <div class="kpi-number">{{ total_pending }}</div>
+        <div class="kpi-label">Pending Challans</div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- VIEW 1: Monthly Revenue (vw_monthly_revenue)  -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="card">
+    <div class="card-header-row">
+        <h3 class="card-title">
+            📅 Monthly Revenue Summary
+            <span class="badge badge-blue" style="font-size:0.72rem; margin-left:6px;">
+                VIEW: vw_monthly_revenue
+            </span>
+        </h3>
+    </div>
+
+    <!-- Chart -->
+    <canvas id="revenueChart" height="80" style="margin-bottom:1.2rem;"></canvas>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Total Payments</th>
+                    <th>Amount Collected (PKR)</th>
+                    <th>Average Payment (PKR)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in monthly_revenue %}
+                <tr>
+                    <td><strong>{{ r.month }}</strong></td>
+                    <td>{{ r.total_payments }}</td>
+                    <td class="text-green">
+                        <strong>{{ "{:,.2f}".format(r.total_collected) }}</strong>
+                    </td>
+                    <td>{{ "{:,.2f}".format(r.avg_payment) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No payment data available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- VIEW 2: Repeat Offenders (vw_repeat_offenders)-->
+<!-- ══════════════════════════════════════════════ -->
+<div class="card">
+    <div class="card-header-row">
+        <h3 class="card-title">
+            🔴 Repeat Offenders Report
+            <span class="badge badge-blue" style="font-size:0.72rem; margin-left:6px;">
+                VIEW: vw_repeat_offenders
+            </span>
+        </h3>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Vehicle No.</th>
+                    <th>Owner Name</th>
+                    <th>CNIC</th>
+                    <th>Phone</th>
+                    <th>Total Violations</th>
+                    <th>Total Fines (PKR)</th>
+                    <th>Last Violation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in repeat_offenders %}
+                <tr>
+                    <td><strong>{{ r.registration_number }}</strong></td>
+                    <td>{{ r.owner_name }}</td>
+                    <td>{{ r.cnic }}</td>
+                    <td>{{ r.phone or '—' }}</td>
+                    <td>
+                        <span class="badge badge-red">{{ r.total_violations }}</span>
+                    </td>
+                    <td class="text-red">
+                        <strong>{{ "{:,.2f}".format(r.total_fines) }}</strong>
+                    </td>
+                    <td>{{ r.last_violation_date | string | truncate(10, True, '') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">
+                        No repeat offenders found (3+ violations required).
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- VIEW 3: Challan Summary (vw_challan_summary)  -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="card">
+    <div class="card-header-row">
+        <h3 class="card-title">
+            📋 Complete Challan Summary
+            <span class="badge badge-blue" style="font-size:0.72rem; margin-left:6px;">
+                VIEW: vw_challan_summary
+            </span>
+        </h3>
+        <!-- Status filter buttons -->
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <a href="{{ url_for('admin.reports') }}"
+               class="btn btn-xs {{ 'btn-primary' if not request.args.get('status') else 'btn-outline' }}">
+                ALL
+            </a>
+            {% for s in ['pending', 'partial', 'paid', 'cancelled'] %}
+            <a href="{{ url_for('admin.reports', status=s) }}"
+               class="btn btn-xs {{ 'btn-primary' if request.args.get('status') == s else 'btn-outline' }}">
+                {{ s | upper }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Challan No.</th>
+                    <th>Vehicle</th>
+                    <th>Owner</th>
+                    <th>Violation</th>
+                    <th>Severity</th>
+                    <th>Officer</th>
+                    <th>Total (PKR)</th>
+                    <th>Balance Due</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in challan_summary %}
+                <tr>
+                    <td><strong>{{ c.challan_number }}</strong></td>
+                    <td>{{ c.registration_number }}</td>
+                    <td>{{ c.owner_name }}</td>
+                    <td>{{ c.violation_type }}</td>
+                    <td>
+                        <span class="badge
+                            {% if c.severity == 'critical' %}badge-red
+                            {% elif c.severity == 'major' %}badge-orange
+                            {% elif c.severity == 'moderate' %}badge-blue
+                            {% else %}badge-green{% endif %}">
+                            {{ c.severity | upper }}
+                        </span>
+                    </td>
+                    <td>{{ c.officer_name }}</td>
+                    <td>{{ "{:,.0f}".format(c.total_amount) }}</td>
+                    <td class="{{ 'text-red' if c.balance_due > 0 else 'text-green' }}">
+                        <strong>{{ "{:,.0f}".format(c.balance_due) }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge
+                            {% if c.status == 'paid' %}badge-green
+                            {% elif c.status == 'partial' %}badge-orange
+                            {% elif c.status == 'cancelled' %}badge-red
+                            {% else %}badge-blue{% endif %}">
+                            {{ c.status | upper }}
+                        </span>
+                    </td>
+                    <td>{{ c.due_date | string | truncate(10, True, '') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted">No challan data found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Chart.js Revenue Chart -->
+<script>
+const revenueData = {{ monthly_revenue | tojson }};
+new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+        labels: revenueData.map(d => d.month),
+        datasets: [
+            {
+                label: 'Amount Collected (PKR)',
+                data: revenueData.map(d => d.total_collected),
+                backgroundColor: 'rgba(39, 174, 96, 0.75)',
+                borderColor: '#1E6B3C',
+                borderWidth: 2,
+                borderRadius: 4,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Number of Payments',
+                data: revenueData.map(d => d.total_payments),
+                backgroundColor: 'rgba(46, 117, 182, 0.75)',
+                borderColor: '#1F4E79',
+                borderWidth: 2,
+                borderRadius: 4,
+                type: 'line',
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' }
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                position: 'left',
+                beginAtZero: true,
+                title: { display: true, text: 'PKR Collected' }
+            },
+            y1: {
+                type: 'linear',
+                position: 'right',
+                beginAtZero: true,
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: 'No. of Payments' }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

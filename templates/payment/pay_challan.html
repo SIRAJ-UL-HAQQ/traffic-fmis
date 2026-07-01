@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Record Payment — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>💳 Record Payment</h2>
+    <a href="{{ url_for('officer.view_challan', challan_id=challan.challan_id) }}"
+       class="btn btn-outline">← Back to Challan</a>
+</div>
+
+<!-- Challan Summary -->
+<div class="info-box">
+    <div class="info-row">
+        <span class="info-label">Challan No:</span>
+        <span class="info-value"><strong>{{ challan.challan_number }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Vehicle:</span>
+        <span class="info-value">{{ challan.registration_number }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Owner:</span>
+        <span class="info-value">{{ challan.owner_name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Violation:</span>
+        <span class="info-value">{{ challan.type_name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Due Date:</span>
+        <span class="info-value {{ 'text-red' if due_info.is_overdue else '' }}">
+            {{ challan.due_date }}
+            {% if due_info.is_overdue %}⚠️ OVERDUE{% endif %}
+        </span>
+    </div>
+</div>
+
+<!-- Fine Breakdown -->
+<div class="fine-breakdown">
+    <div class="fine-row">
+        <span>Original Fine:</span>
+        <span>PKR {{ "{:,.2f}".format(due_info.total_amount) }}</span>
+    </div>
+    {% if due_info.penalty > 0 %}
+    <div class="fine-row text-red">
+        <span>Late Penalty ({{ due_info.weeks_overdue }} week(s)):</span>
+        <span>PKR {{ "{:,.2f}".format(due_info.penalty) }}</span>
+    </div>
+    {% endif %}
+    <div class="fine-row">
+        <span>Already Paid:</span>
+        <span class="text-green">- PKR {{ "{:,.2f}".format(due_info.paid_amount) }}</span>
+    </div>
+    <div class="fine-row fine-total">
+        <span>Outstanding Balance:</span>
+        <span class="text-red">PKR {{ "{:,.2f}".format(due_info.amount_due) }}</span>
+    </div>
+</div>
+
+<!-- Payment Form -->
+<div class="form-card">
+    <h3 class="section-heading">Enter Payment</h3>
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="amount">Payment Amount (PKR) *</label>
+                <input type="number" id="amount" name="amount"
+                       step="0.01" min="1"
+                       max="{{ due_info.amount_due }}"
+                       value="{{ due_info.amount_due }}"
+                       required>
+                <small>Maximum: PKR {{ "{:,.2f}".format(due_info.amount_due) }}</small>
+            </div>
+            <div class="form-group">
+                <label for="method">Payment Method *</label>
+                <select id="method" name="method" required>
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="online">Online Transfer</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success"
+                onclick="return confirm('Confirm payment of PKR ' + document.getElementById('amount').value + '?')">
+            ✅ Confirm Payment
+            </button>
+            <a href="{{ url_for('officer.view_challan', challan_id=challan.challan_id) }}"
+               class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Add Violation Type — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>➕ Add Violation Type</h2>
+    <a href="{{ url_for('admin.violation_types') }}" class="btn btn-outline">← Back</a>
+</div>
+
+<div class="form-card">
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="type_name">Violation Type Name *</label>
+                <input type="text" id="type_name" name="type_name" required
+                       placeholder="e.g. Wrong Turn">
+            </div>
+            <div class="form-group">
+                <label for="base_fine">Base Fine (PKR) *</label>
+                <input type="number" id="base_fine" name="base_fine" required
+                       step="0.01" min="1" placeholder="e.g. 2000">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="severity">Severity *</label>
+                <select id="severity" name="severity" required>
+                    <option value="minor">Minor</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="major">Major</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="3"
+                      placeholder="Brief description of the violation"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">✅ Add Violation Type</button>
+            <a href="{{ url_for('admin.violation_types') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

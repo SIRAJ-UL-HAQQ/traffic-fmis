@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Challan {{ challan.challan_number }} — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>🧾 Challan Details</h2>
+    <div class="page-actions">
+        <a href="{{ url_for('officer.download_pdf', challan_id=challan.challan_id) }}"
+            class="btn btn-primary" id="pdf-btn"
+            onclick="this.textContent='⏳ Generating...'; this.style.opacity='0.7'; this.style.pointerEvents='none';">
+            ⬇ Download PDF
+        </a>
+        {% if challan.status != 'paid' and challan.status != 'cancelled' %}
+        <a href="{{ url_for('payment.pay_challan', challan_id=challan.challan_id) }}"
+           class="btn btn-success">💳 Record Payment</a>
+        {% endif %}
+        <a href="{{ back_url }}" class="btn btn-outline">← Back</a>
+    </div>
+</div>
+
+<!-- Status Banner -->
+<div class="status-banner status-{{ challan.status }}">
+    Challan Status:
+    <strong>{{ challan.status | upper }}</strong>
+    {% if due_info.is_overdue %}
+    &nbsp;|&nbsp; ⚠️ OVERDUE by {{ due_info.weeks_overdue }} week(s)
+    {% endif %}
+</div>
+
+<div class="detail-grid">
+
+    <!-- Challan Info -->
+    <div class="detail-card">
+        <h3 class="detail-title">📋 Challan Information</h3>
+        <table class="detail-table">
+            <tr><th>Challan Number</th><td><strong>{{ challan.challan_number }}</strong></td></tr>
+            <tr><th>Issue Date</th><td>{{ challan.issue_date }}</td></tr>
+            <tr><th>Due Date</th>
+                <td class="{{ 'text-red' if due_info.is_overdue else '' }}">
+                    {{ challan.due_date }}
+                    {% if due_info.is_overdue %} <span class="badge badge-red">OVERDUE</span>{% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Vehicle & Owner -->
+    <div class="detail-card">
+        <h3 class="detail-title">🚗 Vehicle & Owner</h3>
+        <table class="detail-table">
+            <tr><th>Registration</th><td><strong>{{ challan.registration_number }}</strong></td></tr>
+            <tr><th>Vehicle</th><td>{{ challan.year or '' }} {{ challan.make }} {{ challan.model }} ({{ challan.color }})</td></tr>
+            <tr><th>Owner</th><td>{{ challan.owner_name }}</td></tr>
+            <tr><th>CNIC</th><td>{{ challan.cnic }}</td></tr>
+            <tr><th>Phone</th><td>{{ challan.owner_phone or '—' }}</td></tr>
+        </table>
+    </div>
+
+    <!-- Violation Info -->
+    <div class="detail-card">
+        <h3 class="detail-title">⚠️ Violation Details</h3>
+        <table class="detail-table">
+            <tr><th>Violation Type</th>
+                <td>
+                    {{ challan.type_name }}
+                    <span class="badge badge-{{ 'red' if challan.severity == 'critical' else 'orange' if challan.severity == 'major' else 'blue' }}">
+                        {{ challan.severity | upper }}
+                    </span>
+                </td>
+            </tr>
+            <tr><th>Date & Time</th><td>{{ challan.violation_date }}</td></tr>
+            <tr><th>Location</th><td>{{ challan.location }}</td></tr>
+            <tr><th>Description</th><td>{{ challan.description or '—' }}</td></tr>
+            <tr><th>Issuing Officer</th><td>{{ challan.officer_name }} ({{ challan.badge_number }})</td></tr>
+        </table>
+    </div>
+
+    <!-- Fine Summary -->
+    <div class="detail-card">
+        <h3 class="detail-title">💰 Fine Summary</h3>
+        <table class="detail-table">
+            <tr><th>Original Fine</th><td>PKR {{ "{:,.2f}".format(challan.fine_amount) }}</td></tr>
+            <tr><th>Late Penalty</th>
+                <td class="{{ 'text-red' if due_info.penalty > 0 else '' }}">
+                    PKR {{ "{:,.2f}".format(due_info.penalty) }}
+                </td>
+            </tr>
+            <tr><th>Total Amount</th><td><strong>PKR {{ "{:,.2f}".format(due_info.total_amount + due_info.penalty) }}</strong></td></tr>
+            <tr><th>Amount Paid</th>
+                <td class="text-green">PKR {{ "{:,.2f}".format(due_info.paid_amount) }}</td>
+            </tr>
+            <tr class="row-highlight"><th>Balance Due</th>
+                <td class="{{ 'text-red' if due_info.amount_due > 0 else 'text-green' }}">
+                    <strong>PKR {{ "{:,.2f}".format(due_info.amount_due) }}</strong>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- Payment History -->
+{% if payments %}
+<div class="card">
+    <h3 class="card-title">💳 Payment History</h3>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Receipt No.</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Processed By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td><strong>{{ p.receipt_number }}</strong></td>
+                    <td>{{ p.payment_date | string | truncate(16, True, '') }}</td>
+                    <td class="text-green"><strong>PKR {{ "{:,.2f}".format(p.amount_paid) }}</strong></td>
+                    <td>{{ p.payment_method | upper }}</td>
+                    <td>{{ p.processed_by_name or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

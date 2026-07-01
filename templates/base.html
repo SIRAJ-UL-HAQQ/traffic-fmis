@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Traffic FMIS{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- ── Navigation Bar ── -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span>🚦</span> Traffic FMIS
+        </div>
+        <div class="nav-links">
+            {% if session.role == 'admin' %}
+                <a href="{{ url_for('admin.dashboard') }}" {% if request.endpoint == 'admin.dashboard' %}class="active"{% endif %}>Dashboard</a>
+                <a href="{{ url_for('admin.all_challans') }}" {% if request.endpoint == 'admin.all_challans' %}class="active"{% endif %}>All Challans</a>
+                <a href="{{ url_for('admin.officers') }}" {% if request.endpoint == 'admin.officers' %}class="active"{% endif %}>Officers</a>
+                <a href="{{ url_for('admin.violation_types') }}" {% if request.endpoint == 'admin.violation_types' %}class="active"{% endif %}>Violation Types</a>
+                <a href="{{ url_for('admin.reports') }}" {% if request.endpoint == 'admin.reports' %}class="active"{% endif %}>📊 Reports</a>
+                <a href="{{ url_for('auth.register_officer') }}" {% if request.endpoint == 'auth.register_officer' %}class="active"{% endif %}>Add Officer</a>
+            {% else %}
+                <a href="{{ url_for('officer.dashboard') }}" {% if request.endpoint == 'officer.dashboard' %}class="active"{% endif %}>Dashboard</a>
+                <a href="{{ url_for('officer.record_violation') }}" {% if request.endpoint == 'officer.record_violation' %}class="active"{% endif %}>New Violation</a>
+                <a href="{{ url_for('officer.register_vehicle') }}" {% if request.endpoint == 'officer.register_vehicle' %}class="active"{% endif %}>Register Vehicle</a>
+            {% endif %}
+            <a href="{{ url_for('search.search') }}" {% if request.endpoint == 'search.search' %}class="active"{% endif %}>🔍 Search</a>
+            <span class="nav-user">👤 {{ session.username }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <!-- ── Main Content ── -->
+    <main class="container">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

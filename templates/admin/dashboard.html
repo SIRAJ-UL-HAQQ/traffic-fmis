@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — Traffic FMIS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📊 Admin Dashboard</h2>
+    <span class="badge badge-blue">Administrator</span>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card border-blue">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-number">{{ total_violations }}</div>
+        <div class="kpi-label">Total Violations</div>
+    </div>
+    <div class="kpi-card border-green">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-number">PKR {{ "{:,.0f}".format(total_collected) }}</div>
+        <div class="kpi-label">Fines Collected</div>
+    </div>
+    <div class="kpi-card border-orange">
+        <div class="kpi-icon">🕐</div>
+        <div class="kpi-number">{{ pending_challans }}</div>
+        <div class="kpi-label">Pending Challans</div>
+    </div>
+    <div class="kpi-card border-purple">
+        <div class="kpi-icon">👮</div>
+        <div class="kpi-number">{{ active_officers }}</div>
+        <div class="kpi-label">Active Officers</div>
+    </div>
+    <div class="kpi-card border-red">
+        <div class="kpi-icon">📋</div>
+        <div class="kpi-number">PKR {{ "{:,.0f}".format(outstanding) }}</div>
+        <div class="kpi-label">Outstanding Fines</div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-row">
+    <div class="card chart-card">
+        <h3 class="card-title">Monthly Violations (Last 6 Months)</h3>
+        <canvas id="monthlyChart" height="120"></canvas>
+    </div>
+    <div class="card chart-card">
+        <h3 class="card-title">Top Violation Types</h3>
+        <canvas id="pieChart" height="120"></canvas>
+    </div>
+</div>
+
+<!-- Repeat Offenders -->
+{% if repeat_offenders %}
+<div class="card">
+    <h3 class="card-title">🔴 Repeat Offenders (3+ Violations)</h3>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Vehicle No.</th>
+                    <th>Owner</th>
+                    <th>Offenses</th>
+                    <th>Total Fines</th>
+                    <th>Last Violation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in repeat_offenders %}
+                <tr>
+                    <td><strong>{{ r.registration_number }}</strong></td>
+                    <td>{{ r.owner_name }}</td>
+                    <td><span class="badge badge-red">{{ r.offense_count }}</span></td>
+                    <td>PKR {{ "{:,.2f}".format(r.total_fines) }}</td>
+                    <td>{{ r.last_violation | string | truncate(16, True, '') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Violations -->
+<div class="card">
+    <div class="card-header-row">
+        <h3 class="card-title">Recent Violations (All Officers)</h3>
+        <a href="{{ url_for('admin.all_challans') }}" class="btn btn-sm btn-outline">View All →</a>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Vehicle</th>
+                    <th>Owner</th>
+                    <th>Violation</th>
+                    <th>Fine</th>
+                    <th>Officer</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in recent_violations %}
+                <tr>
+                    <td>{{ v.violation_date | string | truncate(16, True, '') }}</td>
+                    <td><strong>{{ v.registration_number }}</strong></td>
+                    <td>{{ v.owner_name }}</td>
+                    <td>{{ v.type_name }}</td>
+                    <td>PKR {{ "{:,.0f}".format(v.fine_amount) }}</td>
+                    <td>{{ v.officer_name }}</td>
+                    <td>
+                        {% if v.status %}
+                            <span class="badge badge-{{ 'green' if v.status == 'paid' else 'orange' if v.status == 'partial' else 'red' }}">
+                                {{ v.status | upper }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if v.challan_id %}
+                        <a href="{{ url_for('officer.view_challan', challan_id=v.challan_id) }}"
+                           class="btn btn-xs btn-outline">View</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script>
+// ── Monthly bar chart ──
+const monthlyData = {{ monthly_data | tojson }};
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+        labels: monthlyData.map(d => d.month),
+        datasets: [{
+            label: 'Violations',
+            data: monthlyData.map(d => d.count),
+            backgroundColor: 'rgba(46, 117, 182, 0.75)',
+            borderColor: '#1F4E79',
+            borderWidth: 2,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+
+// ── Doughnut chart ──
+const topViol = {{ top_violations | tojson }};
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels: topViol.map(v => v.type_name),
+        datasets: [{
+            data: topViol.map(v => v.cnt),
+            backgroundColor: ['#1F4E79','#2E75B6','#5BA4CF','#86C5DA','#B8DCF0'],
+            borderWidth: 2,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11 } } }
+        }
+    }
+});
+</script>
+{% endblock %}
